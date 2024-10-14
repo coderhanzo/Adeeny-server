@@ -5,7 +5,6 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
-from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.db import transaction
 from rest_framework.views import APIView
@@ -36,8 +35,6 @@ from django.template.loader import render_to_string
 from .custom_permissions import IsAdmin, IsImam, IsAssociate, IsSuperAdmin
 from django.contrib.auth.models import Permission
 from django.utils.text import slugify
-from utils.utils import validate_image
-
 
 User = get_user_model()
 
@@ -157,16 +154,8 @@ def get_all_users(request):
 @parser_classes([MultiPartParser, FormParser])
 def signup_view(request):
     """Register view for local authentication"""
-
-    profile_pic = request.data.get("profile_pic")
-    if profile_pic:
-        try:
-            validate_image(profile_pic)
-        except ValidationError("unsupported media format") as e:
-            return response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
     user_data = {
-        "profile_pic": profile_pic,
+        "profile_pic": request.data.get("profile_pic"),
         "first_name": request.data.get("first_name"),
         "other_name": request.data.get("other_name"),
         "last_name": request.data.get("last_name"),

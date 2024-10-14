@@ -14,7 +14,7 @@ urlpatterns = [
     path(
         "get-all-annoucments/", views.get_all_announcements, name="get_all_annoucments"
     ),
-    path("delete-mosque/", views.delete_mosque, name="delete_mosque"),
+    path("delete-mosque/<int:id>", views.delete_mosque, name="delete_mosque"),
     path("upload-sermon/", views.upload_sermon, name="upload_sermon"),
     path("get-sermons/", views.get_all_sermons, name="get_sermons"),
     path("delete-sermon/<int:id>", views.delete_sermon, name="delete_sermon"),

@@ -54,7 +54,7 @@ class Collections(models.Model):
     callback_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     external_transaction_id = models.UUIDField(
-        default=uuid.uuid4, editable=False, unique=True
+        default=uuid.uuid4, editable=False, primary_key=True
     )
 
     def __str__(self):

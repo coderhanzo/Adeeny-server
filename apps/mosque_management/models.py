@@ -31,9 +31,12 @@ class Mosque(models.Model):
     long = models.FloatField(verbose_name=_("Longitude"), blank=True, null=True)
 
     image = models.ImageField(
-        upload_to=upload_to, verbose_name=_("Mosque Image"), blank=True, null=True
+        upload_to=upload_to,
+        verbose_name=_("Mosque Image"),
+        blank=True,
+        null=True,
     )
-    certificate = models.FileField(upload_to=upload_to, blank=True, null=True)
+    certificate = models.FileField(upload_to=upload_to, blank=True, null=True, verbose_name=_("Certificate"))
 
     additional_info = models.TextField(
         verbose_name=_("Additional Content"), blank=True, null=True
@@ -88,16 +91,16 @@ class Announcement(models.Model):
     location = models.CharField(
         max_length=250, blank=True, null=True, verbose_name=_("Mosque Location")
     )
-    lat = models.FloatField(verbose_name=_("Latitude"))
-    long = models.FloatField(verbose_name=_("Longitude"))
+    lat = models.FloatField(verbose_name=_("Latitude"), blank=True, null=True)
+    long = models.FloatField(verbose_name=_("Longitude"), blank=True, null=True)
 
     def user_directory_path(instance, filename):
         # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
         return "{0}/{1}".format("annoucement image", filename)
 
     image = models.FileField(upload_to="user_directory_path", blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     def __str__(self):
         return self.title

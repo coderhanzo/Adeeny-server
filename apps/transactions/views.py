@@ -12,7 +12,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class TokenView(APIView):
     def get(self, request):
         token = PeoplesPayService.get_token()

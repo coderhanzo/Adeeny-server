@@ -34,14 +34,19 @@ def create_mosque(request):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# endpoint to delete mosque
 @api_view(["DELETE"])
 @permission_classes([IsAdmin])
 @authentication_classes([JWTAuthentication])
 def delete_mosque(request, id):
-    mosque = MosqueSerializer.objects.get(id=id)
-    mosque.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+    try:
+        mosque = Mosque.objects.get(id=id)
+        mosque.delete()
+        return Response(
+            {"message": "Mosque deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+    except Mosque.DoesNotExist:
+        return Response({"error": "Mosque not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(["GET"])
@@ -115,7 +120,9 @@ def delete_user(request, id):
     try:
         sermon = Sermon.objects.get(id=id)
     except Sermon.DoesNotExist:
-        return Response({"message": "Sermon not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"message": "Sermon not found"}, status=status.HTTP_404_NOT_FOUND
+        )
     sermon.delete()
     return Response(
         {"message": "Sermon deleted successfully"}, status=status.HTTP_204_NO_CONTENT

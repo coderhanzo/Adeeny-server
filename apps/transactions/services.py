@@ -17,10 +17,7 @@ class PeoplesPayService:
             raise ValueError("Merchant ID or API key not set in environment variables.")
 
         url = f"{PeoplesPayService.BASE_URL}/token/get"
-        payload = {
-            "merchantId": merchantId,
-            "apikey": apikey,
-        }
+        payload = {"merchantId": merchantId, "apikey": apikey, "operation": "DEBIT"}
         headers = {"Content-Type": "application/json"}
         try:
             response = requests.post(url, json=payload, headers=headers, timeout=10)
