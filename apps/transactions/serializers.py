@@ -27,9 +27,10 @@ class CollectionsSerializer(serializers.ModelSerializer):
             "amount",
             "transaction_status",
             "account_name",
+            "description",
             "account_number",
             "account_issuer",
-            "callback_url",
+            "callbackUrl",
         ]
         extra_kwargs = {
             "amount": {"required": True},

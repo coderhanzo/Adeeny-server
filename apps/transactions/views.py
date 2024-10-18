@@ -12,6 +12,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class TokenView(APIView):
     def get(self, request):
         token = PeoplesPayService.get_token()
@@ -107,7 +108,7 @@ class CollectionsView(APIView):
                 )
 
             # Generate callback URL for PeoplesPay
-            callback_url = request.build_absolute_uri(reverse("payment-callback"))
+            # callback_url = request.build_absolute_uri(reverse("payment-callback"))
 
             # Process the collection
             collection_payload = {
@@ -115,8 +116,8 @@ class CollectionsView(APIView):
                 "account_number": validated_data["account_number"],
                 "account_name": validated_data["account_name"],
                 "account_issuer": validated_data["account_issuer"],
-                "callbackUrl": callback_url,
-                "description": "Collection description",
+                "callbackUrl": validated_data["callbackUrl"],
+                "description": validated_data["description"],
                 "externalTransactionId": str(external_transaction_id),
             }
             collection_headers = {
@@ -150,6 +151,7 @@ class CollectionsView(APIView):
                         account_name=validated_data["account_name"],
                         account_number=validated_data["account_number"],
                         account_issuer=validated_data["account_issuer"],
+                        # transaction_status=validated_data["transaction_status"],
                     )
 
                     return Response(
@@ -179,7 +181,7 @@ class CollectionsView(APIView):
 
 class PaymentCallbackAPIView(APIView):
     def post(self, request):
-        transaction_id = request.data.get("transactionId")
+        transaction_id = request.data.get("externalTransactionId")
         payment_status = request.data.get("success") in ["true", True, "1"]
 
         # Validate incoming data

@@ -64,7 +64,7 @@ class PeoplesPayService:
         account_name,
         account_number,
         account_issuer,
-        callback_url,
+        callbackUrl,
     ):
         URL = f"{PeoplesPayService.BASE_URL}/collectmoney"
         payload = {
@@ -72,7 +72,7 @@ class PeoplesPayService:
             "account_number": account_number,
             "account_name": account_name,
             "account_issuer": account_issuer,
-            "callbackUrl": callback_url,
+            "callbackUrl": callbackUrl,
         }
         headers = {
             "Content-Type": "application/json",

@@ -29,25 +29,26 @@ class Payments(models.Model):
 
 # this model will replace WAQF donations/ projectdonations
 class Collections(models.Model):
-    # NETWORK_TYPE_CHOICES = (
-    #     ("MTN", "mtn"),
-    #     ("vodafone", "vodafone"),
-    #     ("AIRTELTIGO", "airteltigo"),
-    # )
-    # PAYMENT_STATUS_CHOICES = [
-    #     ("pending", "Pending"),
-    #     ("completed", "Completed"),
-    #     ("failed", "Failed"),
-    # ]
+    NETWORK_TYPE_CHOICES = (
+        ("MTN", "mtn"),
+        ("vodafone", "vodafone"),
+        ("AIRTELTIGO", "airteltigo"),
+    )
+    PAYMENT_STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    ]
     amount = models.CharField(max_length=100)
     transaction_status = models.CharField(
-        max_length=100
+        max_length=100, choices=PAYMENT_STATUS_CHOICES, default="pending"
     )
     account_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=100)
     account_issuer = models.CharField(max_length=100)
-    callback_url = models.URLField(blank=True, null=True)
+    callbackUrl = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    description = models.CharField(max_length=50, default="transaction description")
     external_transaction_id = models.UUIDField(
         default=uuid.uuid4, editable=False, primary_key=True
     )
