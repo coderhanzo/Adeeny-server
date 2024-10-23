@@ -96,6 +96,22 @@ def delete_announcement(request, id):
 # creating sermons
 @api_view(["POST"])
 def upload_sermon(request):
+    MAX_FILE_SIZE = 200 * 1024 * 1024  # 200MB
+    # Check if there are any files in the request data
+    if "file" not in request.FILES:
+        return Response(
+            {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    file = request.FILES["file"]
+
+    # Check if file size is less than the maximum allowed size (200MB)
+    if file.size > MAX_FILE_SIZE:
+        return Response(
+            {"error": "File size exceeds 200MB limit"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     serializer = SermonSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()

@@ -184,6 +184,7 @@ def signup_view(request):
         response = Response(
             {
                 "access": str(token.access_token),
+                # user: serializer.data
             }
         )
         response.set_cookie(
@@ -235,7 +236,7 @@ def logout(request):
 
 class SetPassword(APIView):
     def post(self, request):
-        data = self.request.data
+        data = self.request.data 
         print(data)
         serializer = SetPasswordRetypeSerializer(
             context={"request": self.request}, data=data
