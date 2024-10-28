@@ -97,6 +97,17 @@ def delete_announcement(request, id):
 @api_view(["POST"])
 def upload_sermon(request):
     MAX_FILE_SIZE = 200 * 1024 * 1024  # 200MB
+
+    allowed_content_types = [
+        "application/pdf",  # PDF
+        "application/epub+zip",  # ePub
+        "video/mp4",  # MP4 video
+        "video/x-matroska",  # MKV video
+        "audio/mpeg",  # MP3 audio
+        "audio/wav",  # WAV audio
+        "audio/aac",  # AAC audio
+        "audio/ogg",  # OGG audio
+    ]
     # Check if there are any files in the request data
     if "file" not in request.FILES:
         return Response(
@@ -104,6 +115,15 @@ def upload_sermon(request):
         )
 
     file = request.FILES["file"]
+
+    # Check if the file type is allowed
+    if file.content_type not in allowed_content_types:
+        return Response(
+            {
+                "error": "Invalid file type. Allowed types are PDF, ePub, videos, and audio files."
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     # Check if file size is less than the maximum allowed size (200MB)
     if file.size > MAX_FILE_SIZE:

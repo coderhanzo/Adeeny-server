@@ -103,13 +103,14 @@ def delete_donation(request, id):
         obj = ProjectDonation.objects.get(id=id)
     except ProjectDonation.DoesNotExist:
         return Response({"error": "Waqf not found"}, status=status.HTTP_404_NOT_FOUND)
-    if obj.end_date <= timezone.now():
+
+    # Check if the end date is set and compare it
+    if obj.end_date is not None and obj.end_date <= timezone.now():
         obj.is_active = False
         obj.save()
         serializer = WaqfDonationsSerializer(obj)
         return Response(
-            {"message": "Project has ended"},
-            data=serializer.data,
+            {"message": "Project has ended", "data": serializer.data},
             status=status.HTTP_200_OK,
         )
     else:
