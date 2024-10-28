@@ -47,7 +47,7 @@ class GetAllDonations(APIView):
 
 # WAQF DONATIONS
 class GetAllWaqfDonations(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         date = request.query_params.get("date", None)
