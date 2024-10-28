@@ -14,6 +14,7 @@ class MonetaryDonationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectDonation
         fields = [
+            "id",
             "donors_name",
             "phone_number",
             "amount",
@@ -25,6 +26,7 @@ class WaqfDonationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectDonation
         fields = [
+            "id",
             "title",
             "description",
             "upload_image",
