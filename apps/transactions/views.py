@@ -182,7 +182,7 @@ class CollectionsView(APIView):
 class PaymentCallbackAPIView(APIView):
     def post(self, request):
         transaction_id = request.data.get("externalTransactionId")
-        payment_status = request.data.get("success") in ["true", True, "1"]
+        payment_status = request.data.get("success") is True
 
         # Validate incoming data
         if not transaction_id or payment_status is None:
@@ -194,10 +194,9 @@ class PaymentCallbackAPIView(APIView):
         # Find the collection related to this transaction using external_transaction_id
         try:
             collection = Collections.objects.get(external_transaction_id=transaction_id)
-            if payment_status:
-                collection.transaction_status = "completed"
-            else:
-                collection.transaction_status = "failed"
+
+            # Update the transaction status based on payment_success
+            collection.transaction_status = "completed" if payment_status else "failed"
             collection.save()
 
             return Response(
