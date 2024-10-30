@@ -207,7 +207,6 @@ class PaymentCallbackAPIView(APIView):
                 status=status.HTTP_200_OK,
             )
         except Collections.DoesNotExist:
-            logger.warning(f"Transaction with ID {transaction_id} not found.")
             return Response(
                 {"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND
             )
