@@ -2,13 +2,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 from django.contrib.auth import get_user_model
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.backends import default_backend
+from hashlib import sha256
+import os
 import uuid
-
-# Create your models here.
-
-# 2 tables: payments(donations) and collections(WAQF donations)
-# User = get_user_model()
-
 
 # this model will replace donations
 class Payments(models.Model):
@@ -55,3 +53,25 @@ class Collections(models.Model):
 
     def __str__(self):
         return f"Collection: {self.amount} - {self.transaction_status} - {self.external_transaction_id}"
+
+class CollectionsCard(models.Model):
+    card_number = models.BinaryField(
+        editable=False
+    )  # Store as binary data after hashing
+    cvv = models.BinaryField(editable=False)
+    expiry = models.BinaryField(editable=False)
+    salt = models.BinaryField(editable=False)  # Salt is binary data
+
+    def _hash_value(self, value, salt):
+        # PBKDF2HMAC key derivation function
+        kdf = PBKDF2HMAC(
+            algorithm=sha256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend(),
+        )
+        return kdf.derive(value.encode())  # Convert value to bytes for hashing
+
+    def __str__(self):
+        return f"Card Info (Hashed): {self.card_number[:10]}... with Salt"

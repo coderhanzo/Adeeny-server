@@ -1,6 +1,8 @@
 import os
+from h11 import Response
 import requests
 from django.conf import settings
+from rest_framework import status
 
 
 # i am thinking that before any requests are made a token needs to be generated
@@ -29,7 +31,10 @@ class PeoplesPayService:
                 return None
         except requests.exceptions.RequestException as e:
             print(f"Error retrieving token: {e}")
-            return None
+            return Response(
+                {"message": "Failed to retrieve token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @staticmethod
     def disburse_money(

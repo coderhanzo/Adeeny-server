@@ -65,7 +65,7 @@ class PaymentsView(APIView):
 
             print(disburse_data)
 
-            if disburse_response.status_code == 200 and disburse_data.get("success"):
+            if disburse_response.status_code == 200 and disburse_data.get():
                 payment_serializer.save()  # Save payment record to the database
                 return Response(
                     {"message": "Payment processed successfully"},
