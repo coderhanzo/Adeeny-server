@@ -8,9 +8,6 @@ from .services import PeoplesPayService
 from django.urls import reverse
 import requests
 import uuid
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class TokenView(APIView):
@@ -32,14 +29,15 @@ class PaymentsView(APIView):
 
         # Get the token using the PeoplesPayService from the .get_token() method
         token = PeoplesPayService.get_token()
-        print(token)
         if token is None:
+            print(token, f"token")
             return Response(
                 {"message": "Failed to retrieve token"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if payment_serializer.is_valid():
             validated_data = payment_serializer.validated_data
+            print(validated_data, f"validated data")
         # Disburse payment
         disburse_payload = {
             "amount": str(validated_data["amount"]),
@@ -47,12 +45,13 @@ class PaymentsView(APIView):
             "account_name": validated_data["account_name"],
             "account_issuer": validated_data["account_issuer"],
             # "external_transaction_id": validated_data["external_transaction_id"],
-            "description": "Payment description",
+            # "description": validated_data["description"],
         }
         disburse_headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token['data']}",
         }
+        print(disburse_payload, f"Disburse payload")
 
         try:
             disburse_response = requests.post(
@@ -60,12 +59,10 @@ class PaymentsView(APIView):
                 json=disburse_payload,
                 headers=disburse_headers,
             )
-            print(disburse_headers)
             disburse_data = disburse_response.json()
+            print(disburse_data, f"disburse_data")
 
-            print(disburse_data)
-
-            if disburse_response.status_code == 200 and disburse_data.get():
+            if disburse_response.status_code == 200 and disburse_data.get("success"):
                 payment_serializer.save()  # Save payment record to the database
                 return Response(
                     {"message": "Payment processed successfully"},
@@ -101,6 +98,7 @@ class CollectionsView(APIView):
 
             # Get the token using the PeoplesPayService
             token = PeoplesPayService.get_token()
+            print(token)
             if token is None:
                 return Response(
                     {"message": "Failed to retrieve token"},
@@ -151,9 +149,8 @@ class CollectionsView(APIView):
                         account_name=validated_data["account_name"],
                         account_number=validated_data["account_number"],
                         account_issuer=validated_data["account_issuer"],
-                        # transaction_status=validated_data["transaction_status"],
                     )
-
+                    print(Payments.objects)
                     return Response(
                         {"message": "Collection processed successfully"},
                         status=status.HTTP_201_CREATED,
@@ -182,27 +179,36 @@ class CollectionsView(APIView):
 class PaymentCallbackAPIView(APIView):
     def post(self, request):
         transaction_id = request.data.get("externalTransactionId")
-        payment_status = request.data.get("success") is True
+        payment_success = request.data.get(
+            "success", False
+        )  # Defaults to False if missing
 
         # Validate incoming data
-        if not transaction_id or payment_status is None:
+        if not transaction_id or payment_success is None:
             return Response(
-                {"error": "Missing required fields: transactionId or success"},
+                {"error": "Missing required fields: externalTransactionId or success"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Find the collection related to this transaction using external_transaction_id
         try:
             collection = Collections.objects.get(external_transaction_id=transaction_id)
-
-            # Update the transaction status based on payment_success
-            collection.transaction_status = "completed" if payment_status else "failed"
+            print(collection, f"collection data")
+            if payment_success:
+                collection.transaction_status = "completed"
+            else:
+                collection.transaction_status = "failed"
             collection.save()
 
             return Response(
                 {
                     "message": "Callback processed successfully",
+                    "transaction_id": collection.external_transaction_id,
+                    "amount": collection.amount,
                     "status": collection.transaction_status,
+                    "account_name": collection.account_name,
+                    "description": collection.description,
+                    "created_at": collection.created_at,
                 },
                 status=status.HTTP_200_OK,
             )

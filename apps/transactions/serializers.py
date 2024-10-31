@@ -47,11 +47,13 @@ class CardDetailsSerializer(serializers.Serializer):
     cvv = serializers.CharField(max_length=4, write_only=True)
     expiry = serializers.CharField(max_length=7, write_only=True)
 
+
 class CollectionsCardSerializer(serializers.ModelSerializer):
     card = CardDetailsSerializer()
     class Meta:
         model = CollectionsCard
-        fields = {"id"}
+        # fields = {"id"}
+        fields = "__all__"
 
     def create(self, validated_data):
         # Retrieve raw card data from input, then remove them from validated data
