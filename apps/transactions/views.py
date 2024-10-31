@@ -152,7 +152,10 @@ class CollectionsView(APIView):
                     )
                     print(Payments.objects)
                     return Response(
-                        {"message": "Collection processed successfully"},
+                        {
+                            "message": "Collection processed successfully",
+                            "external_transaction_id": str(external_transaction_id),
+                        },
                         status=status.HTTP_201_CREATED,
                     )
                 else:

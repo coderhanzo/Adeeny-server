@@ -20,6 +20,7 @@ class Payments(models.Model):
     # this will be for the database, so every trnasaction will have an id, we can use uuid for this,
     # then we will have to call it in the view or call back url when we need to verify the payment
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.account_name} {self.account_number} {self.created_at}"
