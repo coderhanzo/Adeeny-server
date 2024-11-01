@@ -56,6 +56,10 @@ class Collections(models.Model):
         return f"Collection: {self.amount} - {self.transaction_status} - {self.external_transaction_id}"
 
 class CollectionsCard(models.Model):
+    account_name = models.CharField(max_length=100)
+    callbackUrl = models.URLField(blank=True, null=True)
+    clientRedirectUrl = models.URLField(blank=True, null=True)
+    description = models.CharField(max_length=50, default="transaction description")
     card_number = models.BinaryField(
         editable=False
     )  # Store as binary data after hashing

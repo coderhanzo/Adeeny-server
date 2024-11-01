@@ -41,6 +41,10 @@ class CollectionsSerializer(serializers.ModelSerializer):
             "account_issuer": {"required": True},
         }
 
+class NameEnquirySerializer(serializers.Serializer):
+    account_name = serializers.CharField(max_length=100)
+    account_number = serializers.CharField(max_length=100)
+    account_issuer = serializers.CharField(max_length=100)
 
 class CardDetailsSerializer(serializers.Serializer):
     card_number = serializers.CharField(max_length=16, write_only=True)
@@ -66,11 +70,13 @@ class CollectionsCardSerializer(serializers.ModelSerializer):
 
         if raw_card_number and raw_cvv and raw_expiry:
             card_instance.salt = os.urandom(20)
-            card_instance.card_number = self._hash_value(
+            card_instance.card_number = card_instance._hash_value(
                 raw_card_number, card_instance.salt
             )
-            card_instance.cvv = self._hash_value(raw_cvv, card_instance.salt)
-            card_instance.expiry = self._hash_value(raw_expiry, card_instance.salt)
+            card_instance.cvv = card_instance._hash_value(raw_cvv, card_instance.salt)
+            card_instance.expiry = card_instance._hash_value(
+                raw_expiry, card_instance.salt
+            )
 
         card_instance.save()
         return card_instance
