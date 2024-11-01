@@ -5,7 +5,12 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Payments, Collections, CollectionsCard
-from .serializers import PaymentsSerializer, CollectionsSerializer, CollectionsCardSerializer, NameEnquirySerializer
+from .serializers import (
+    PaymentsSerializer,
+    CollectionsSerializer,
+    CollectionsCardSerializer,
+    NameEnquirySerializer,
+)
 from .services import PeoplesPayService
 from django.urls import reverse
 import requests
@@ -222,10 +227,11 @@ class PaymentCallbackAPIView(APIView):
                 {"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
+
 class NameEnquiryView(APIView):
     def post(self, request):
         serializer = NameEnquirySerializer(data=request.data)
-
+        token = PeoplesPayService.get_token()
         if serializer.is_valid():
             data = serializer.validated_data
             enquiry_payload = {
@@ -236,7 +242,7 @@ class NameEnquiryView(APIView):
             print(enquiry_payload, f"enquiry payload")
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {PeoplesPayService.get_token()}"
+                "Authorization": f"Bearer {token['data']}",
             }
             print(headers, f"headers")
             try:
@@ -259,7 +265,7 @@ class NameEnquiryView(APIView):
                     return Response(
                         {
                             "error": response_data.get("message", "Enquiry failed"),
-                            "code": response.data.get("code"),
+                            "code": response_data.get("code"),
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
@@ -270,6 +276,3 @@ class NameEnquiryView(APIView):
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-# Card Payment view
-# class 
