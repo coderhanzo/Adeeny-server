@@ -41,10 +41,12 @@ class CollectionsSerializer(serializers.ModelSerializer):
             "account_issuer": {"required": True},
         }
 
+
 class NameEnquirySerializer(serializers.Serializer):
-    account_name = serializers.CharField(max_length=100)
+    account_type = serializers.CharField(max_length=100)
     account_number = serializers.CharField(max_length=100)
     account_issuer = serializers.CharField(max_length=100)
+
 
 class CardDetailsSerializer(serializers.Serializer):
     card_number = serializers.CharField(max_length=16, write_only=True)
@@ -54,6 +56,7 @@ class CardDetailsSerializer(serializers.Serializer):
 
 class CollectionsCardSerializer(serializers.ModelSerializer):
     card = CardDetailsSerializer()
+
     class Meta:
         model = CollectionsCard
         # fields = {"id"}

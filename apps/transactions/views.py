@@ -229,7 +229,7 @@ class NameEnquiryView(APIView):
         if serializer.is_valid():
             data = serializer.validated_data
             enquiry_payload = {
-                "account_name": data["account_name"],
+                "account_type": data["account_name"],
                 "account_number": data["account_number"],
                 "account_issuer": data["account_issuer"],
             }
@@ -270,3 +270,6 @@ class NameEnquiryView(APIView):
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+# Card Payment view
+# class 
