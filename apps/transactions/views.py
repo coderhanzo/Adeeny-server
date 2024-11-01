@@ -229,7 +229,7 @@ class NameEnquiryView(APIView):
         if serializer.is_valid():
             data = serializer.validated_data
             enquiry_payload = {
-                "account_type": data["account_name"],
+                "account_type": data["account_type"],
                 "account_number": data["account_number"],
                 "account_issuer": data["account_issuer"],
             }
