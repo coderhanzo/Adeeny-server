@@ -1,6 +1,7 @@
 import stat
 from urllib import response
 from django.shortcuts import render
+from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -189,9 +190,7 @@ class CollectionsView(APIView):
 class PaymentCallbackAPIView(APIView):
     def post(self, request):
         transaction_id = request.data.get("externalTransactionId")
-        payment_success = request.data.get(
-            "success", False
-        )  # Defaults to False if missing
+        payment_success = request.data.get("success")
 
         # Validate incoming data
         if not transaction_id or payment_success is None:
@@ -276,3 +275,63 @@ class NameEnquiryView(APIView):
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CardPaymentAPIView(APIView):
+    def post(self, request):
+        # Deserialize and validate the incoming data
+        serializer = CollectionsCardSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Save the validated card data and hash sensitive fields
+        card_instance = serializer.save()
+        print(card_instance, f"card instance")
+
+        # Prepare transaction data for PeoplesPay
+        transaction_data = {
+            "account_number": request.data.get("account_number"),
+            "account_name": card_instance.account_name,
+            "amount": request.data.get("amount"),
+            "description": card_instance.description,
+            "externalTransactionId": card_instance.id.hex,  # unique ID for tracking
+            "callbackUrl": card_instance.callbackUrl,
+            "clientRedirectUrl": card_instance.clientRedirectUrl,
+        }
+
+        token = PeoplesPayService.get_token()
+        # Send transaction data to PeoplesPay
+        url = f"{PeoplesPayService.BASE_URL}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token['data']}",
+        }
+
+        try:
+            response = requests.post(url, json=transaction_data, headers=headers)
+            response_data = response.json()
+
+            # Check response from PeoplesPay for success/failure
+            if response.status_code == 200 and response_data.get("success"):
+                return Response(
+                    {
+                        "message": "Payment processed successfully",
+                        "transaction_id": response_data.get("transactionId"),
+                        "status": "completed",
+                        "account_name": transaction_data["account_name"],
+                        "amount": transaction_data["amount"],
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {
+                        "error": "Payment failed",
+                        "details": response_data.get("message", "Unknown error"),
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        except requests.RequestException as e:
+            return Response(
+                {"error": "Error connecting to PeoplesPay", "details": str(e)},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )

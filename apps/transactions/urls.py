@@ -11,5 +11,6 @@ urlpatterns = [
         name="payment-callback",
     ),
     path("name-enquiry/", views.NameEnquiryView.as_view()),
+    path("card-payment/", views.CardPaymentAPIView.as_view()),
     path("token/", views.TokenView.as_view()),
 ]
