@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 from django.contrib.auth import get_user_model
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from hashlib import sha256
 import os
@@ -56,8 +57,8 @@ class Collections(models.Model):
         return f"Collection: {self.amount} - {self.transaction_status} - {self.external_transaction_id}"
 
 class CollectionsCard(models.Model):
-    account_name = models.CharField(max_length=100)
-    amount = models.CharField(max_length=100)
+    account_name = models.CharField(max_length=100, default="card_account_name")
+    amount = models.CharField(max_length=100, default="card_account_amount")
     callbackUrl = models.URLField(blank=True, null=True)
     clientRedirectUrl = models.URLField(blank=True, null=True)
     description = models.CharField(max_length=50, default="transaction description")
@@ -71,7 +72,7 @@ class CollectionsCard(models.Model):
     def _hash_value(self, value, salt):
         # PBKDF2HMAC key derivation function
         kdf = PBKDF2HMAC(
-            algorithm=sha256(),
+            algorithm=hashes.SHA256(),
             length=32,
             salt=salt,
             iterations=100000,
