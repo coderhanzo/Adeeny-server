@@ -132,8 +132,7 @@ class CollectionsView(APIView):
             }
 
             try:
-                print("trying to send collection")
-                print(collection_payload)
+                print(collection_payload, f"trying to send collection")
                 collection_response = requests.post(
                     f"{PeoplesPayService.BASE_URL}/collectmoney",
                     json=collection_payload,
