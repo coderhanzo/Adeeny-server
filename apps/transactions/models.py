@@ -56,12 +56,13 @@ class Collections(models.Model):
     def __str__(self):
         return f"Collection: {self.amount} - {self.transaction_status} - {self.external_transaction_id}"
 
+
 class CollectionsCard(models.Model):
-    account_name = models.CharField(max_length=100, default="card_account_name")
-    amount = models.CharField(max_length=100, default="card_account_amount")
+    account_name = models.CharField(max_length=100)
     callbackUrl = models.URLField(blank=True, null=True)
     clientRedirectUrl = models.URLField(blank=True, null=True)
     description = models.CharField(max_length=50, default="transaction description")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     card_number = models.BinaryField(
         editable=False
     )  # Store as binary data after hashing
@@ -81,4 +82,6 @@ class CollectionsCard(models.Model):
         return kdf.derive(value.encode())  # Convert value to bytes for hashing
 
     def __str__(self):
-        return f"Card Info (Hashed): {self.card_number[:10]}... with Salt"
+        # Display first 10 characters of hashed card_number in hex, if it exists
+        card_number_hex = self.card_number[:10].hex() if self.card_number else "N/A"
+        return f"Card Info (Hashed): {card_number_hex}... with Salt"

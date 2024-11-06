@@ -291,7 +291,7 @@ class CardPaymentAPIView(APIView):
             "account_name": card_instance.account_name,
             "amount": request.data.get("amount"),
             "description": card_instance.description,
-            "externalTransactionId": card_instance.id.hex,  # unique ID for tracking
+            "externalTransactionId": str(card_instance.id),  # unique ID for tracking
             "callbackUrl": card_instance.callbackUrl,
             "clientRedirectUrl": card_instance.clientRedirectUrl,
         }
