@@ -57,6 +57,7 @@ class Collections(models.Model):
 
 class CollectionsCard(models.Model):
     account_name = models.CharField(max_length=100)
+    amount = models.CharField(max_length=100)
     callbackUrl = models.URLField(blank=True, null=True)
     clientRedirectUrl = models.URLField(blank=True, null=True)
     description = models.CharField(max_length=50, default="transaction description")

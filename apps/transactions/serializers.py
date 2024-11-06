@@ -55,7 +55,7 @@ class CardDetailsSerializer(serializers.Serializer):
 
 
 class CollectionsCardSerializer(serializers.ModelSerializer):
-    card = CardDetailsSerializer()
+    card = CardDetailsSerializer(write_only=True)
 
     class Meta:
         model = CollectionsCard
@@ -63,22 +63,23 @@ class CollectionsCardSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def create(self, validated_data):
-        # Retrieve raw card data from input, then remove them from validated data
-        raw_card_number = validated_data.pop("card_number", None)
-        raw_cvv = validated_data.pop("cvv", None)
-        raw_expiry = validated_data.pop("expiry", None)
+        # Retrieve the nested 'card' data and separate it from the rest
+        card_data = validated_data.pop("card", None)
 
-        # create new a card instance without saving it
+        # Create a new card instance with remaining data
         card_instance = CollectionsCard(**validated_data)
 
-        if raw_card_number and raw_cvv and raw_expiry:
-            card_instance.salt = os.urandom(20)
+        # Hash the card data if provided
+        if card_data:
+            card_instance.salt = os.urandom(20)  # Generate a random salt for hashing
             card_instance.card_number = card_instance._hash_value(
-                raw_card_number, card_instance.salt
+                card_data["card_number"], card_instance.salt
             )
-            card_instance.cvv = card_instance._hash_value(raw_cvv, card_instance.salt)
+            card_instance.cvv = card_instance._hash_value(
+                card_data["cvv"], card_instance.salt
+            )
             card_instance.expiry = card_instance._hash_value(
-                raw_expiry, card_instance.salt
+                card_data["expiry"], card_instance.salt
             )
 
         card_instance.save()
