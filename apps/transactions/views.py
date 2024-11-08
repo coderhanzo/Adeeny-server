@@ -1,4 +1,5 @@
 import stat
+import json
 from urllib import response
 from django.shortcuts import render
 from django.conf import settings
@@ -188,6 +189,9 @@ class CollectionsView(APIView):
 
 class PaymentCallbackAPIView(APIView):
     def post(self, request):
+        # incoming data from PeoplesPay
+        print("Incoming request data:", json.dumps(request.data, indent=4))
+
         transaction_id = request.data.get("externalTransactionId")
         payment_success = request.data.get("success")
 
@@ -197,7 +201,8 @@ class PaymentCallbackAPIView(APIView):
                 {"error": "Missing required fields: externalTransactionId or success"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
+        # Convert payment_success to boolean
+        payment_success = True if payment_success in [True, "true", "True"] else False
         # Find the collection related to this transaction using external_transaction_id
         try:
             collection = Collections.objects.get(external_transaction_id=transaction_id)
