@@ -187,13 +187,95 @@ class CollectionsView(APIView):
         )
 
 
+# Helper function to check peoples pay for payment status
+def check_peoplespay_status(transaction_id):
+    url = f"{PeoplesPayService.BASE_URL}"
+    token = PeoplesPayService.get_token()
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token['data']}",
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json().get(
+            "status"
+        )  # Extract and return the status field from the response
+    return None
+
+# for updating payment status message
+
+# class PaymentCallbackAPIView(APIView):
+#     def post(self, request):
+#         transaction_id = request.data.get("externalTransactionId")
+#         payment_success = request.data.get("success", False)
+#         response_code = request.data.get("code")
+
+#         # Validate incoming data
+#         if not transaction_id or response_code is None:
+#             return Response(
+#                 {"error": "Missing required fields: externalTransactionId or code"},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         try:
+#             # Retrieve the collection using the transaction ID
+#             collection = Collections.objects.get(external_transaction_id=transaction_id)
+
+#             # Determine the status based on response code
+#             if (
+#                 response_code == "00"
+#             ):  # Adjust the code as per PeoplesPay's documentation
+#                 updated_status = "completed"
+#             elif response_code in [
+#                 "02",
+#                 "03",
+#             ]:  # Example failure codes; adjust as needed
+#                 updated_status = "failed"
+#             elif response_code == "01":  # '01' means still processing
+#                 updated_status = "pending"
+#             else:
+#                 updated_status = (
+#                     collection.transaction_status
+#                 )  # Keep current status if unknown code
+
+#             # Update the collection status only if necessary
+#             if updated_status != collection.transaction_status:
+#                 collection.transaction_status = updated_status
+#                 collection.save()
+
+#             return Response(
+#                 {
+#                     "message": "Callback processed successfully",
+#                     "transaction_id": collection.external_transaction_id,
+#                     "amount": collection.amount,
+#                     "status": collection.transaction_status,
+#                     "account_name": collection.account_name,
+#                     "description": collection.description,
+#                     "created_at": collection.created_at,
+#                 },
+#                 status=status.HTTP_200_OK,
+#             )
+
+#         except Collections.DoesNotExist:
+#             return Response(
+#                 {"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND
+#             )
+#         except Exception as e:
+#             return Response(
+#                 {"error": "An unexpected error occurred", "details": str(e)},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             )
+
+
+# Working version of callback, but it dosen't check back with peeples pay
+
 class PaymentCallbackAPIView(APIView):
     def post(self, request):
         # incoming data from PeoplesPay
         print("Incoming request data:", json.dumps(request.data, indent=4))
 
         transaction_id = request.data.get("externalTransactionId")
-        payment_success = request.data.get("success")
+        payment_success = request.data.get("success", False)
 
         # Validate incoming data
         if not transaction_id or payment_success is None:
@@ -279,6 +361,7 @@ class NameEnquiryView(APIView):
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CardPaymentAPIView(APIView):
     def post(self, request):
