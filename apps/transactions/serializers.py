@@ -1,7 +1,6 @@
 from curses import raw
 from email.policy import default
 import os
-from typing import ReadOnly
 from rest_framework import serializers
 from .models import Payments, Collections, CollectionsCard
 

@@ -280,36 +280,43 @@ def check_peoplespay_status(transaction_id):
 
 # Working version of callback, but it dosen't check back with peeples pay
 
+
 class PaymentCallbackAPIView(APIView):
     def post(self, request):
-        # incoming data from PeoplesPay
+        # Log the incoming data from PeoplesPay for debugging
         print("Incoming request data:", json.dumps(request.data, indent=4))
 
-        transaction_id = request.data.get("externalTransactionId")
+        # Extract PeoplesPay transaction ID and success status from the request data
+        peoplespay_id = request.data.get("transactionId")
         payment_success = request.data.get("success", False)
 
         # Validate incoming data
-        if not transaction_id or payment_success is None:
+        if not peoplespay_id or payment_success is None:
             return Response(
-                {"error": "Missing required fields: externalTransactionId or success"},
+                {"error": "Missing required fields: transactionId or success"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        # Convert payment_success to boolean
+
+        # Convert payment_success to a proper boolean value
         payment_success = True if payment_success in [True, "true", "True"] else False
-        # Find the collection related to this transaction using external_transaction_id
+
+        # Find the collection related to this transaction using peoplespay_id
         try:
-            collection = Collections.objects.get(external_transaction_id=transaction_id)
-            print(collection, f"collection data")
+            collection = Collections.objects.get(peoplespay_id=peoplespay_id)
+            print(collection, "collection data")
+
+            # Update the transaction status based on the success value
             if payment_success:
                 collection.transaction_status = "completed"
             else:
                 collection.transaction_status = "failed"
             collection.save()
 
+            # Return a response with updated information
             return Response(
                 {
                     "message": "Callback processed successfully",
-                    "transaction_id": collection.external_transaction_id,
+                    "transaction_id": collection.peoplespay_id,
                     "amount": collection.amount,
                     "status": collection.transaction_status,
                     "account_name": collection.account_name,

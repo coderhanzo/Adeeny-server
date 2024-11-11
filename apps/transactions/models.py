@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from djmoney.models.fields import MoneyField
 from django.contrib.auth import get_user_model
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -54,7 +55,7 @@ class Collections(models.Model):
         default=uuid.uuid4, editable=False, primary_key=True
     )
     transaction_id = models.CharField(
-        editable=False, primary_key=True, unique=True, max_length=255
+        editable=False, unique=True, max_length=255, default="peoplespay_id"
     )
 
     def __str__(self):
