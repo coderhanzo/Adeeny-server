@@ -9,6 +9,7 @@ from hashlib import sha256
 import os
 import uuid
 
+
 # this model will replace donations
 class Payments(models.Model):
     external_transaction_id = models.UUIDField(
@@ -18,7 +19,7 @@ class Payments(models.Model):
     account_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=100)
     account_issuer = models.CharField(max_length=100)
-    # this will be for the database, so every trnasaction will have an id, we can use uuid for this,
+    # this will be for the database, so every transaction will have an id, we can use uuid for this,
     # then we will have to call it in the view or call back url when we need to verify the payment
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -51,6 +52,9 @@ class Collections(models.Model):
     description = models.CharField(max_length=50, default="transaction description")
     external_transaction_id = models.UUIDField(
         default=uuid.uuid4, editable=False, primary_key=True
+    )
+    transaction_id = models.CharField(
+        editable=False, primary_key=True, unique=True, max_length=255
     )
 
     def __str__(self):

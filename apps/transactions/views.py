@@ -1,11 +1,14 @@
 import stat
 import json
+import trace
 from urllib import response
 from django.shortcuts import render
 from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps import transactions
 from .models import Payments, Collections, CollectionsCard
 from .serializers import (
     PaymentsSerializer,
@@ -93,6 +96,7 @@ class PaymentsView(APIView):
 class CollectionsView(APIView):
     def post(self, request):
         collection_serializer = CollectionsSerializer(data=request.data)
+        transaction_id = request.data.get("transactionId")
 
         # Generate the external_transaction_id at the start
         external_transaction_id = uuid.uuid4()
@@ -114,9 +118,6 @@ class CollectionsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Generate callback URL for PeoplesPay
-            # callback_url = request.build_absolute_uri(reverse("payment-callback"))
-
             # Process the collection
             collection_payload = {
                 "amount": str(validated_data["amount"]),
@@ -126,6 +127,7 @@ class CollectionsView(APIView):
                 "callbackUrl": validated_data["callbackUrl"],
                 "description": validated_data["description"],
                 "externalTransactionId": str(external_transaction_id),
+                "transaction_id": str(transaction_id),
             }
             collection_headers = {
                 "Content-Type": "application/json",
@@ -140,19 +142,24 @@ class CollectionsView(APIView):
                     headers=collection_headers,
                 )
                 collection_data = collection_response.json()
-                print(collection_data)
+                print(collection_data, f"collection data")
+
+                # Save the PeoplesPay ID if available in the response
+                transaction_id = collection_data.get("transactionId")
 
                 if collection_response.status_code == 200 and collection_data.get(
                     "success"
-                ):
-                    # Save collection record, including external_transaction_id
+                ) and transaction_id:
+                    # Save collection record, including external_transaction_id and PeoplesPay ID
                     collection_serializer.save(
-                        external_transaction_id=external_transaction_id
+                        external_transaction_id=external_transaction_id,
+                        transaction_id=transaction_id,  # Save the PeoplesPay ID
                     )
 
                     # Create a corresponding payment entry with the same external_transaction_id
                     Payments.objects.create(
                         external_transaction_id=external_transaction_id,
+                        transaction_id=transaction_id,
                         amount=validated_data["amount"],
                         account_name=validated_data["account_name"],
                         account_number=validated_data["account_number"],
@@ -162,10 +169,14 @@ class CollectionsView(APIView):
                     return Response(
                         {
                             "message": "Collection processed successfully",
-                            "external_transaction_id": str(external_transaction_id),
+                            "external_transaction_id": str(
+                                external_transaction_id
+                            ),  # Internal ID for tracking
+                            "transaction_id": transaction_id,  # PeoplesPay ID
                         },
                         status=status.HTTP_201_CREATED,
                     )
+
                 else:
                     return Response(
                         {

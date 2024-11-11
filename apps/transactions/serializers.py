@@ -1,10 +1,13 @@
 from curses import raw
+from email.policy import default
 import os
+from typing import ReadOnly
 from rest_framework import serializers
 from .models import Payments, Collections, CollectionsCard
 
 
 class PaymentsSerializer(serializers.ModelSerializer):
+    operation = serializers.ReadOnlyField(default="CREDIT")
     class Meta:
         model = Payments
         fields = [
@@ -13,6 +16,7 @@ class PaymentsSerializer(serializers.ModelSerializer):
             "account_number",
             "account_issuer",
             "external_transaction_id",
+            "operation"
         ]
         extra_kwargs = {
             "amount": {"required": True},
@@ -23,9 +27,11 @@ class PaymentsSerializer(serializers.ModelSerializer):
 
 
 class CollectionsSerializer(serializers.ModelSerializer):
+    transaction_id = serializers.CharField(read_only=True)
     class Meta:
         model = Collections
         fields = [
+            "transaction_id"
             "amount",
             "transaction_status",
             "account_name",
