@@ -77,6 +77,9 @@ class CollectionsCard(models.Model):
     expiry = models.BinaryField(editable=False)
     salt = models.BinaryField(editable=False)  # Salt is binary data
     created_at = models.DateTimeField(auto_now_add=True)
+    card_transaction_id = models.CharField(
+        editable=False, unique=True, max_length=255, default="cardId"
+    )
 
     def _hash_value(self, value, salt):
         # PBKDF2HMAC key derivation function

@@ -14,7 +14,7 @@ class PaymentsSerializer(serializers.ModelSerializer):
             "account_number",
             "account_issuer",
             "external_transaction_id",
-            "operation"
+            "operation",
         ]
         extra_kwargs = {
             "amount": {"required": True},
@@ -25,11 +25,10 @@ class PaymentsSerializer(serializers.ModelSerializer):
 
 
 class CollectionsSerializer(serializers.ModelSerializer):
-    transaction_id = serializers.CharField(read_only=True)
     class Meta:
         model = Collections
         fields = [
-            "transaction_id"
+            "transaction_id",
             "amount",
             "transaction_status",
             "account_name",
@@ -63,7 +62,6 @@ class CollectionsCardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CollectionsCard
-        # fields = {"id"}
         fields = "__all__"
 
     def create(self, validated_data):

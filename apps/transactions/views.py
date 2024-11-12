@@ -1,3 +1,4 @@
+import collections
 import stat
 import json
 import trace
@@ -127,7 +128,7 @@ class CollectionsView(APIView):
                 "callbackUrl": validated_data["callbackUrl"],
                 "description": validated_data["description"],
                 "externalTransactionId": str(external_transaction_id),
-                "transaction_id": str(transaction_id),
+                # "transaction_id": str(transaction_id),
             }
             collection_headers = {
                 "Content-Type": "application/json",
@@ -157,24 +158,21 @@ class CollectionsView(APIView):
                         external_transaction_id=external_transaction_id,
                         transaction_id=transaction_id,  # Save the PeoplesPay ID
                     )
-
                     # Create a corresponding payment entry with the same external_transaction_id
                     Payments.objects.create(
                         external_transaction_id=external_transaction_id,
-                        transaction_id=transaction_id,
                         amount=validated_data["amount"],
                         account_name=validated_data["account_name"],
                         account_number=validated_data["account_number"],
                         account_issuer=validated_data["account_issuer"],
                     )
-                    print(Payments.objects)
                     return Response(
                         {
                             "message": "Collection processed successfully",
                             "external_transaction_id": str(
                                 external_transaction_id
                             ),  # Internal ID for tracking
-                            "transaction_id": transaction_id,  # PeoplesPay ID
+                            "transaction_id": str(transaction_id),  # PeoplesPay ID
                         },
                         status=status.HTTP_201_CREATED,
                     )
@@ -216,97 +214,37 @@ def check_peoplespay_status(transaction_id):
     return None
 
 
-# for updating payment status message
-
-# class PaymentCallbackAPIView(APIView):
-#     def post(self, request):
-#         transaction_id = request.data.get("externalTransactionId")
-#         payment_success = request.data.get("success", False)
-#         response_code = request.data.get("code")
-
-#         # Validate incoming data
-#         if not transaction_id or response_code is None:
-#             return Response(
-#                 {"error": "Missing required fields: externalTransactionId or code"},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
-
-#         try:
-#             # Retrieve the collection using the transaction ID
-#             collection = Collections.objects.get(external_transaction_id=transaction_id)
-
-#             # Determine the status based on response code
-#             if (
-#                 response_code == "00"
-#             ):  # Adjust the code as per PeoplesPay's documentation
-#                 updated_status = "completed"
-#             elif response_code in [
-#                 "02",
-#                 "03",
-#             ]:  # Example failure codes; adjust as needed
-#                 updated_status = "failed"
-#             elif response_code == "01":  # '01' means still processing
-#                 updated_status = "pending"
-#             else:
-#                 updated_status = (
-#                     collection.transaction_status
-#                 )  # Keep current status if unknown code
-
-#             # Update the collection status only if necessary
-#             if updated_status != collection.transaction_status:
-#                 collection.transaction_status = updated_status
-#                 collection.save()
-
-#             return Response(
-#                 {
-#                     "message": "Callback processed successfully",
-#                     "transaction_id": collection.external_transaction_id,
-#                     "amount": collection.amount,
-#                     "status": collection.transaction_status,
-#                     "account_name": collection.account_name,
-#                     "description": collection.description,
-#                     "created_at": collection.created_at,
-#                 },
-#                 status=status.HTTP_200_OK,
-#             )
-
-#         except Collections.DoesNotExist:
-#             return Response(
-#                 {"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND
-#             )
-#         except Exception as e:
-#             return Response(
-#                 {"error": "An unexpected error occurred", "details": str(e)},
-#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             )
-
-
-# Working version of callback, but it dosen't check back with peeples pay
+# Working version of callback
 
 
 class PaymentCallbackAPIView(APIView):
     def post(self, request):
-        # Log the incoming data from PeoplesPay for debugging
-        print("Incoming request data:", json.dumps(request.data, indent=4))
 
         # Extract PeoplesPay transaction ID and success status from the request data
-        peoplespay_id = request.data.get("transactionId")
-        payment_success = request.data.get("success", False)
+        transaction_id = request.data.get("transactionId")
 
+        payment_success = request.data.get("success")
+
+        # incoming data from PeoplesPay for debugging
+        print("Incoming request data:", json.dumps(request.data, indent=4))
         # Validate incoming data
-        if not peoplespay_id or payment_success is None:
+
+        """
+        if not transaction_id or payment_success is None:
+        """
+        if not transaction_id:
             return Response(
-                {"error": "Missing required fields: transactionId or success"},
+                {"error": "Missing required fields: transactionId"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Convert payment_success to a proper boolean value
-        payment_success = True if payment_success in [True, "true", "True"] else False
+        # payment_success = True if payment_success in [True, "true", "True"] else False
 
-        # Find the collection related to this transaction using peoplespay_id
+        # Find the collection related to this transaction using transaction_id
         try:
-            collection = Collections.objects.get(peoplespay_id=peoplespay_id)
-            print(collection, "collection data")
+            collection = Collections.objects.get(transaction_id=transaction_id)
+            print(collection, f"collection data")
 
             # Update the transaction status based on the success value
             if payment_success:
@@ -319,7 +257,8 @@ class PaymentCallbackAPIView(APIView):
             return Response(
                 {
                     "message": "Callback processed successfully",
-                    "transaction_id": collection.peoplespay_id,
+                    "transaction_id": collection.transaction_id,
+                    "external_transaction_id": collection.external_transaction_id,
                     "amount": collection.amount,
                     "status": collection.transaction_status,
                     "account_name": collection.account_name,
@@ -392,13 +331,14 @@ class CardPaymentAPIView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         # Save the validated card data and hash sensitive fields
         card_instance = serializer.save()
-        print(card_instance, f"card instance")
+        print(card_instance, f"Card-Instance")
 
         # Prepare transaction data for PeoplesPay
         transaction_data = {
-            "account_number": request.data.get("account_number"),
+            # "account_number": request.data.get("account_number"),
             "account_name": card_instance.account_name,
             "amount": request.data.get("amount"),
+            "card": request.data.get("card"),
             "description": card_instance.description,
             "externalTransactionId": str(card_instance.id),  # unique ID for tracking
             "callbackUrl": card_instance.callbackUrl,
@@ -414,9 +354,9 @@ class CardPaymentAPIView(APIView):
         }
 
         try:
+            print(transaction_data, f"transaction data")
             response = requests.post(url, json=transaction_data, headers=headers)
             response_data = response.json()
-
             # Check response from PeoplesPay for success/failure
             if response.status_code == 200 and response_data.get("success"):
                 return Response(
@@ -443,3 +383,68 @@ class CardPaymentAPIView(APIView):
                 {"error": "Error connecting to PeoplesPay", "details": str(e)},
                 status=status.HTTP_502_BAD_GATEWAY,
             )
+
+
+# for updating payment status message
+
+# class PaymentCallbackAPIView(APIView):
+#     def post(self, request):
+#         transaction_id = request.data.get("transactionId")
+#         payment_success = request.data.get("success")
+#         response_code = request.data.get("code")
+
+#         # Validate incoming data
+#         if not transaction_id or response_code is None:
+#             return Response(
+#                 {"error": "Missing required fields: transactionId"},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         try:
+#             # Retrieve the collection using the transaction ID
+#             collection = Collections.objects.get(external_transaction_id=transaction_id)
+
+#             # Determine the status based on response code
+#             if (
+#                 response_code == "00"
+#             ):  # Adjust the code as per PeoplesPay's documentation
+#                 updated_status = "completed"
+#             elif response_code in [
+#                 "02",
+#                 "03",
+#             ]:  # Example failure codes; adjust as needed
+#                 updated_status = "failed"
+#             elif response_code == "01":  # '01' means still processing
+#                 updated_status = "pending"
+#             else:
+#                 updated_status = (
+#                     collection.transaction_status
+#                 )  # Keep current status if unknown code
+
+#             # Update the collection status only if necessary
+#             if updated_status != collection.transaction_status:
+#                 collection.transaction_status = updated_status
+#                 collection.save()
+
+#             return Response(
+#                 {
+#                     "message": "Callback processed successfully",
+#                     "transaction_id": collection.external_transaction_id,
+#                     "amount": collection.amount,
+#                     "status": collection.transaction_status,
+#                     "account_name": collection.account_name,
+#                     "description": collection.description,
+#                     "created_at": collection.created_at,
+#                 },
+#                 status=status.HTTP_200_OK,
+#             )
+
+#         except Collections.DoesNotExist:
+#             return Response(
+#                 {"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND
+#             )
+#         except Exception as e:
+#             return Response(
+#                 {"error": "An unexpected error occurred", "details": str(e)},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             )
