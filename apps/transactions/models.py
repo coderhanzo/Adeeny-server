@@ -20,6 +20,7 @@ class Payments(models.Model):
     account_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=100)
     account_issuer = models.CharField(max_length=100)
+    description = models.CharField(max_length=100, default="description")
     # this will be for the database, so every transaction will have an id, we can use uuid for this,
     # then we will have to call it in the view or call back url when we need to verify the payment
     created_at = models.DateTimeField(auto_now_add=True)
@@ -77,9 +78,7 @@ class CollectionsCard(models.Model):
     expiry = models.BinaryField(editable=False)
     salt = models.BinaryField(editable=False)  # Salt is binary data
     created_at = models.DateTimeField(auto_now_add=True)
-    card_transaction_id = models.CharField(
-        editable=False, unique=True, max_length=255, default="cardId"
-    )
+    card_transaction_id = models.CharField(editable=False, unique=True, max_length=255)
 
     def _hash_value(self, value, salt):
         # PBKDF2HMAC key derivation function

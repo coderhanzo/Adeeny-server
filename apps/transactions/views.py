@@ -39,11 +39,11 @@ class TokenView(APIView):
 class PaymentsView(APIView):
     def post(self, request):
         payment_serializer = PaymentsSerializer(data=request.data)
-        print(payment_serializer, f"payments payload")
         # Get the token using the PeoplesPayService from the .get_token() method
-        token = PeoplesPayService.get_token()
+        print(payment_serializer, f"payment serializer")
+        token = PeoplesPayService.get_token(operation="CREDIT")
+        print(token, f"token")
         if token is None:
-            print(token, f"token")
             return Response(
                 {"message": "Failed to retrieve token"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -58,7 +58,7 @@ class PaymentsView(APIView):
             "account_name": validated_data["account_name"],
             "account_issuer": validated_data["account_issuer"],
             # "external_transaction_id": validated_data["external_transaction_id"],
-            # "description": validated_data["description"],
+            "description": validated_data["description"],
         }
         disburse_headers = {
             "Content-Type": "application/json",
@@ -347,7 +347,7 @@ class CardPaymentAPIView(APIView):
 
         token = PeoplesPayService.get_token()
         # Send transaction data to PeoplesPay
-        url = f"{PeoplesPayService.BASE_URL}"
+        url = f"{PeoplesPayService.BASE_URL}/collectmoney/card"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token['data']}",
@@ -359,10 +359,14 @@ class CardPaymentAPIView(APIView):
             response_data = response.json()
             # Check response from PeoplesPay for success/failure
             if response.status_code == 200 and response_data.get("success"):
+                card_transaction_id = response_data.get("transactionId")
+                if card_transaction_id:
+                    card_instance.card_transaction_id = card_transaction_id
+                    card_instance.save()
                 return Response(
                     {
                         "message": "Payment processed successfully",
-                        "transaction_id": response_data.get("transactionId"),
+                        "transaction_id": card_transaction_id,
                         "status": "completed",
                         "account_name": transaction_data["account_name"],
                         "amount": transaction_data["amount"],

@@ -6,22 +6,11 @@ from .models import Payments, Collections, CollectionsCard
 
 
 class PaymentsSerializer(serializers.ModelSerializer):
+    # operation = serializers.CharField(max_length=255, default="CREDIT")
+
     class Meta:
         model = Payments
-        fields = [
-            "amount",
-            "account_name",
-            "account_number",
-            "account_issuer",
-            "external_transaction_id",
-            "operation",
-        ]
-        extra_kwargs = {
-            "amount": {"required": True},
-            "account_name": {"required": True},
-            "account_number": {"required": True},
-            "account_issuer": {"required": True},
-        }
+        fields = "__all__"
 
 
 class CollectionsSerializer(serializers.ModelSerializer):

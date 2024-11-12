@@ -11,7 +11,7 @@ class PeoplesPayService:
     BASE_URL = "https://peoplespay.com.gh/peoplepay/hub"
 
     @staticmethod
-    def get_token():
+    def get_token(operation="DEBIT"):
         merchantId = os.getenv("PEOPLES_PAY_MERCHANT_ID")
         apikey = os.getenv("PEOPLES_PAY_API_KEY")
 
@@ -19,7 +19,11 @@ class PeoplesPayService:
             raise ValueError("Merchant ID or API key not set in environment variables.")
 
         url = f"{PeoplesPayService.BASE_URL}/token/get"
-        payload = {"merchantId": merchantId, "apikey": apikey, "operation": "DEBIT"}
+        payload = {
+            "merchantId": merchantId,
+            "apikey": apikey,
+            "operation": operation.upper(),
+        }
         headers = {"Content-Type": "application/json"}
         try:
             response = requests.post(url, json=payload, headers=headers, timeout=10)
