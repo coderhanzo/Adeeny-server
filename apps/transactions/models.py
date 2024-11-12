@@ -24,6 +24,8 @@ class Payments(models.Model):
     # then we will have to call it in the view or call back url when we need to verify the payment
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # read only field that cant be changed and remains constant
+    operation = models.CharField(max_length=100, default="CREDIT", editable=False)
 
     def __str__(self):
         return f"{self.account_name} {self.account_number} {self.created_at}"

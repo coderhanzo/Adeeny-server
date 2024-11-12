@@ -6,7 +6,6 @@ from .models import Payments, Collections, CollectionsCard
 
 
 class PaymentsSerializer(serializers.ModelSerializer):
-    operation = serializers.ReadOnlyField(default="CREDIT")
     class Meta:
         model = Payments
         fields = [
