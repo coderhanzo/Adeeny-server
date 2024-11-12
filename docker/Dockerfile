@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     proj-bin \
     proj-data \
     default-libmysqlclient-dev \
+    default-mysql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
