@@ -38,7 +38,7 @@ class TokenView(APIView):
 class PaymentsView(APIView):
     def post(self, request):
         payment_serializer = PaymentsSerializer(data=request.data)
-
+        print(payment_serializer, f"payments payload")
         # Get the token using the PeoplesPayService from the .get_token() method
         token = PeoplesPayService.get_token()
         if token is None:
@@ -147,9 +147,11 @@ class CollectionsView(APIView):
                 # Save the PeoplesPay ID if available in the response
                 transaction_id = collection_data.get("transactionId")
 
-                if collection_response.status_code == 200 and collection_data.get(
-                    "success"
-                ) and transaction_id:
+                if (
+                    collection_response.status_code == 200
+                    and collection_data.get("success")
+                    and transaction_id
+                ):
                     # Save collection record, including external_transaction_id and PeoplesPay ID
                     collection_serializer.save(
                         external_transaction_id=external_transaction_id,
@@ -212,6 +214,7 @@ def check_peoplespay_status(transaction_id):
             "status"
         )  # Extract and return the status field from the response
     return None
+
 
 # for updating payment status message
 
