@@ -66,15 +66,18 @@ class Collections(models.Model):
 
 
 class CollectionsCard(models.Model):
-    account_name = models.CharField(max_length=100)
+    external_transaction_id = models.UUIDField(
+        default=uuid.uuid4, editable=False, primary_key=True
+    )
     callbackUrl = models.URLField(blank=True, null=True)
     clientRedirectUrl = models.URLField(blank=True, null=True)
+    account_name = models.CharField(max_length=100, default="account_name")
     description = models.CharField(max_length=50, default="transaction description")
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    card_number = models.BinaryField(
+    amount = models.CharField(max_length=60, default="amount")
+    number = models.BinaryField(
         editable=False
     )  # Store as binary data after hashing
-    cvv = models.BinaryField(editable=False)
+    cvc = models.BinaryField(editable=False)
     expiry = models.BinaryField(editable=False)
     salt = models.BinaryField(editable=False)  # Salt is binary data
     created_at = models.DateTimeField(auto_now_add=True)

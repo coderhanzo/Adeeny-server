@@ -41,8 +41,8 @@ class NameEnquirySerializer(serializers.Serializer):
 
 
 class CardDetailsSerializer(serializers.Serializer):
-    card_number = serializers.CharField(max_length=16, write_only=True)
-    cvv = serializers.CharField(max_length=4, write_only=True)
+    number = serializers.CharField(max_length=16, write_only=True)
+    cvc = serializers.CharField(max_length=4, write_only=True)
     expiry = serializers.CharField(max_length=7, write_only=True)
 
 
@@ -63,11 +63,11 @@ class CollectionsCardSerializer(serializers.ModelSerializer):
         # Hash the card data if provided
         if card_data:
             card_instance.salt = os.urandom(20)  # Generate a random salt for hashing
-            card_instance.card_number = card_instance._hash_value(
+            card_instance.number = card_instance._hash_value(
                 card_data["card_number"], card_instance.salt
             )
-            card_instance.cvv = card_instance._hash_value(
-                card_data["cvv"], card_instance.salt
+            card_instance.cvc = card_instance._hash_value(
+                card_data["cvc"], card_instance.salt
             )
             card_instance.expiry = card_instance._hash_value(
                 card_data["expiry"], card_instance.salt

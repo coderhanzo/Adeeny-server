@@ -2,7 +2,7 @@ import collections
 import stat
 import json
 import trace
-from urllib import response
+from urllib import request, response
 from django.shortcuts import render
 from django.conf import settings
 from rest_framework import status
@@ -17,6 +17,7 @@ from .serializers import (
     CollectionsCardSerializer,
     NameEnquirySerializer,
 )
+from django.db import transaction
 from .services import PeoplesPayService
 from django.urls import reverse
 import requests
@@ -97,7 +98,7 @@ class PaymentsView(APIView):
 class CollectionsView(APIView):
     def post(self, request):
         collection_serializer = CollectionsSerializer(data=request.data)
-        transaction_id = request.data.get("transactionId")
+        # transaction_id = request.data.get("transactionId")
 
         # Generate the external_transaction_id at the start
         external_transaction_id = uuid.uuid4()
@@ -128,7 +129,6 @@ class CollectionsView(APIView):
                 "callbackUrl": validated_data["callbackUrl"],
                 "description": validated_data["description"],
                 "externalTransactionId": str(external_transaction_id),
-                # "transaction_id": str(transaction_id),
             }
             collection_headers = {
                 "Content-Type": "application/json",
@@ -145,7 +145,7 @@ class CollectionsView(APIView):
                 collection_data = collection_response.json()
                 print(collection_data, f"collection data")
 
-                # Save the PeoplesPay ID if available in the response
+                # extract the PeoplesPay ID if available in the response
                 transaction_id = collection_data.get("transactionId")
 
                 if (
@@ -173,6 +173,7 @@ class CollectionsView(APIView):
                                 external_transaction_id
                             ),  # Internal ID for tracking
                             "transaction_id": str(transaction_id),  # PeoplesPay ID
+                            "collectin_status": collection_data.get("success"),
                         },
                         status=status.HTTP_201_CREATED,
                     )
@@ -201,6 +202,7 @@ class CollectionsView(APIView):
 # Helper function to check peoples pay for payment status
 def check_peoplespay_status(transaction_id):
     url = f"{PeoplesPayService.BASE_URL}"
+    print(request, f"looking at peoplespay")
     token = PeoplesPayService.get_token()
     headers = {
         "Content-Type": "application/json",
@@ -211,7 +213,7 @@ def check_peoplespay_status(transaction_id):
         return response.json().get(
             "status"
         )  # Extract and return the status field from the response
-    return None
+    return Response({request.get("success", "code", "message")})
 
 
 # Working version of callback
@@ -242,6 +244,10 @@ class PaymentCallbackAPIView(APIView):
         # payment_success = True if payment_success in [True, "true", "True"] else False
 
         # Find the collection related to this transaction using transaction_id
+        """
+        trying to use a for statement to get the payment status and then 
+        update the status of the objects id provide
+        """
         try:
             collection = Collections.objects.get(transaction_id=transaction_id)
             print(collection, f"collection data")
@@ -256,8 +262,8 @@ class PaymentCallbackAPIView(APIView):
             # Return a response with updated information
             return Response(
                 {
-                    "message": "Callback processed successfully",
-                    "transaction_id": collection.transaction_id,
+                    "message": request.data.get("message"),
+                    "transaction_id": request.data.get("transactionId"),
                     "external_transaction_id": collection.external_transaction_id,
                     "amount": collection.amount,
                     "status": collection.transaction_status,
@@ -324,69 +330,103 @@ class NameEnquiryView(APIView):
 
 
 class CardPaymentAPIView(APIView):
+
     def post(self, request):
-        # Deserialize and validate the incoming data
-        serializer = CollectionsCardSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        # Save the validated card data and hash sensitive fields
-        card_instance = serializer.save()
-        print(card_instance, f"Card-Instance")
+        card_serializer = CollectionsCardSerializer(data=request.data)
+        # card_transaction_id = request.data.get("transactionId")
 
-        # Prepare transaction data for PeoplesPay
-        transaction_data = {
-            # "account_number": request.data.get("account_number"),
-            "account_name": card_instance.account_name,
-            "amount": request.data.get("amount"),
-            "card": request.data.get("card"),
-            "description": card_instance.description,
-            "externalTransactionId": str(card_instance.id),  # unique ID for tracking
-            "callbackUrl": card_instance.callbackUrl,
-            "clientRedirectUrl": card_instance.clientRedirectUrl,
-        }
+        # Generate the external_transaction_id at the start
+        external_transaction_id = uuid.uuid4()
+        print("take a look")
 
-        token = PeoplesPayService.get_token()
-        # Send transaction data to PeoplesPay
-        url = f"{PeoplesPayService.BASE_URL}/collectmoney/card"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {token['data']}",
-        }
+        if card_serializer.is_valid():
+            print("if passed")
+            validated_data = card_serializer.validated_data
 
-        try:
-            print(transaction_data, f"transaction data")
-            response = requests.post(url, json=transaction_data, headers=headers)
-            response_data = response.json()
-            # Check response from PeoplesPay for success/failure
-            if response.status_code == 200 and response_data.get("success"):
-                card_transaction_id = response_data.get("transactionId")
-                if card_transaction_id:
-                    card_instance.card_transaction_id = card_transaction_id
-                    card_instance.save()
+            # Assign the external_transaction_id to the validated data after it is available
+            validated_data["external_transaction_id"] = external_transaction_id
+
+            # Get the token using the PeoplesPayService
+            token = PeoplesPayService.get_token()
+            print(token)
+            if token is None:
                 return Response(
-                    {
-                        "message": "Payment processed successfully",
-                        "transaction_id": card_transaction_id,
-                        "status": "completed",
-                        "account_name": transaction_data["account_name"],
-                        "amount": transaction_data["amount"],
-                    },
-                    status=status.HTTP_200_OK,
-                )
-            else:
-                return Response(
-                    {
-                        "error": "Payment failed",
-                        "details": response_data.get("message", "Unknown error"),
-                    },
+                    {"message": "Failed to retrieve token"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        except requests.RequestException as e:
-            return Response(
-                {"error": "Error connecting to PeoplesPay", "details": str(e)},
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
+            # Process the collection
+            card_payload = {
+                "externalTransactionId": str(external_transaction_id),
+                "account_name": validated_data["account_name"],
+                "amount": validated_data["amount"],
+                "card": validated_data["card"],
+                "description": validated_data["description"],
+                "callbackUrl": validated_data["callbackUrl"],
+                "clientRedirectUrl": validated_data["clientRedirectUrl"],
+            }
+            collection_headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token['data']}",
+            }
+
+            try:
+                print(card_payload, f"trying to send collection")
+                card_response = requests.post(
+                    f"{PeoplesPayService.BASE_URL}/collectmoney",
+                    json=card_payload,
+                    headers=collection_headers,
+                )
+                card_data = card_response.json()
+                print(card_data, f"collection data")
+
+                # extract the PeoplesPay ID if available in the response
+                card_transaction_id = card_data.get("transactionId")
+
+                if (
+                    card_response.status_code == 200
+                    and card_data.get("success")
+                    and card_transaction_id
+                ):
+                    # Save collection record, including external_transaction_id and PeoplesPay ID
+                    card_serializer.save(
+                        external_transaction_id=external_transaction_id,
+                        card_transaction_id=card_transaction_id,  # Save the PeoplesPay ID
+                    )
+                    # Create a corresponding payment entry with the same external_transaction_id
+                    Payments.objects.create(
+                        external_transaction_id=external_transaction_id,
+                        account_name=validated_data["account_name"],
+                        amount=validated_data["amount"],
+                        card=validated_data["card"],
+                        callbackUrl=validated_data["callbackUrl"],
+                        clientRedirectUrl=validated_data["clientRedirectUrl"],
+                    )
+                    return Response(
+                        {
+                            "message": "Collection processed successfully",
+                            "external_transaction_id": str(external_transaction_id),
+                            "card_transaction_id": str(
+                                card_transaction_id
+                            ),  # PeoplesPay ID
+                            "collection_status": card_data.get("success"),
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+
+                else:
+                    return Response(
+                        {"message": card_data.get("message")},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            except requests.exceptions.RequestException as e:
+                return Response(
+                    {"message": f"Error processing collection: {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        return Response(card_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # for updating payment status message
