@@ -17,3 +17,8 @@ urlpatterns = [
     path("verify-otp/", views.verify_otp_view, name="verify_otp"),
     # path("users/filter/", views.GetUsersPerRole.as_view(), name="create_superadmin"),
 ]
+
+"""
+password reset isn't working - it can't find the user logged in
+get logged in user too doesn't seem to work - no error message provided or displayed
+"""
