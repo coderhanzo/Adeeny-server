@@ -64,7 +64,7 @@ class CollectionsCardSerializer(serializers.ModelSerializer):
         if card_data:
             card_instance.salt = os.urandom(20)  # Generate a random salt for hashing
             card_instance.number = card_instance._hash_value(
-                card_data["card_number"], card_instance.salt
+                card_data["number"], card_instance.salt
             )
             card_instance.cvc = card_instance._hash_value(
                 card_data["cvc"], card_instance.salt

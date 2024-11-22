@@ -348,7 +348,7 @@ class CardPaymentAPIView(APIView):
 
             # Get the token using the PeoplesPayService
             token = PeoplesPayService.get_token()
-            print(token)
+            print(token, f":token")
             if token is None:
                 return Response(
                     {"message": "Failed to retrieve token"},
@@ -357,7 +357,7 @@ class CardPaymentAPIView(APIView):
 
             # Process the collection
             card_payload = {
-                "externalTransactionId": str(external_transaction_id),
+                # "externalTransactionId": str(external_transaction_id),
                 "account_name": validated_data["account_name"],
                 "amount": validated_data["amount"],
                 "card": validated_data["card"],
@@ -371,21 +371,21 @@ class CardPaymentAPIView(APIView):
             }
 
             try:
-                print(card_payload, f"trying to send collection")
+                print(card_payload, f":sending collection")
                 card_response = requests.post(
-                    f"{PeoplesPayService.BASE_URL}/collectmoney",
+                    f"{PeoplesPayService.BASE_URL}/collectmoney/card",
                     json=card_payload,
                     headers=collection_headers,
                 )
                 card_data = card_response.json()
-                print(card_data, f"collection data")
+                print(json.dumps(card_data), f"collection data")
 
                 # extract the PeoplesPay ID if available in the response
-                card_transaction_id = card_data.get("transactionId")
+                card_transaction_id = card_data["transactionId"]
 
                 if (
                     card_response.status_code == 200
-                    and card_data.get("success")
+                    and card_data["success"]
                     and card_transaction_id
                 ):
                     # Save collection record, including external_transaction_id and PeoplesPay ID
@@ -394,11 +394,13 @@ class CardPaymentAPIView(APIView):
                         card_transaction_id=card_transaction_id,  # Save the PeoplesPay ID
                     )
                     # Create a corresponding payment entry with the same external_transaction_id
-                    Payments.objects.create(
+                    CollectionsCard.objects.create(
                         external_transaction_id=external_transaction_id,
                         account_name=validated_data["account_name"],
                         amount=validated_data["amount"],
-                        card=validated_data["card"],
+                        number=validated_data["card"]["number"],
+                        cvc=validated_data["card"]["cvc"],
+                        expiry=validated_data["card"]["expiry"],
                         callbackUrl=validated_data["callbackUrl"],
                         clientRedirectUrl=validated_data["clientRedirectUrl"],
                     )
@@ -409,14 +411,14 @@ class CardPaymentAPIView(APIView):
                             "card_transaction_id": str(
                                 card_transaction_id
                             ),  # PeoplesPay ID
-                            "collection_status": card_data.get("success"),
+                            "collection_status": card_data["success"],
                         },
                         status=status.HTTP_201_CREATED,
                     )
 
                 else:
                     return Response(
-                        {"message": card_data.get("message")},
+                        {"message": card_data["message"]},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
