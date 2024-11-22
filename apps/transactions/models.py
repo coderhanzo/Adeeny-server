@@ -67,18 +67,18 @@ class Collections(models.Model):
 
 class CollectionsCard(models.Model):
     external_transaction_id = models.UUIDField(
-        default=uuid.uuid4, editable=False, primary_key=True
+        default=uuid.uuid4, editable=False, primary_key=True, unique=True
     )
     callbackUrl = models.URLField(blank=True, null=True)
     clientRedirectUrl = models.URLField(blank=True, null=True)
     account_name = models.CharField(max_length=100, default="account_name")
     description = models.CharField(max_length=50, default="transaction description")
     amount = models.CharField(max_length=60, default="amount")
-    number = models.BinaryField(
-        editable=False
+    number = models.CharField(
+        editable=False, max_length=500
     )  # Store as binary data after hashing
-    cvc = models.BinaryField(editable=False)
-    expiry = models.BinaryField(editable=False)
+    cvc = models.CharField(editable=False, max_length=500)
+    expiry = models.CharField(editable=False, max_length=500)
     salt = models.BinaryField(editable=False)  # Salt is binary data
     created_at = models.DateTimeField(auto_now_add=True)
     card_transaction_id = models.CharField(editable=False, unique=True, max_length=255)
@@ -87,7 +87,7 @@ class CollectionsCard(models.Model):
         # PBKDF2HMAC key derivation function
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
-            length=32,
+            length=20,
             salt=salt,
             iterations=100000,
             backend=default_backend(),

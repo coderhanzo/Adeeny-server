@@ -378,7 +378,7 @@ class CardPaymentAPIView(APIView):
                     headers=collection_headers,
                 )
                 card_data = card_response.json()
-                print(json.dumps(card_data), f"collection data")
+                print(json.dumps(card_data), f"collection data:l381")
 
                 # extract the PeoplesPay ID if available in the response
                 card_transaction_id = card_data["transactionId"]
@@ -395,7 +395,7 @@ class CardPaymentAPIView(APIView):
                     )
                     # Create a corresponding payment entry with the same external_transaction_id
                     CollectionsCard.objects.create(
-                        external_transaction_id=external_transaction_id,
+                        # external_transaction_id=external_transaction_id,
                         account_name=validated_data["account_name"],
                         amount=validated_data["amount"],
                         number=validated_data["card"]["number"],
