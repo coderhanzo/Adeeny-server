@@ -168,12 +168,15 @@ class CollectionsView(APIView):
                     )
                     return Response(
                         {
-                            "message": "Collection processed successfully",
-                            "external_transaction_id": str(
+                            "message": collection_data["message"],
+                            "internal_id": str(
                                 external_transaction_id
                             ),  # Internal ID for tracking
-                            "transaction_id": str(transaction_id),  # PeoplesPay ID
-                            "collectin_status": collection_data.get("success"),
+                            "peoplespay_id": collection_data[
+                                "transactionId"
+                            ],  # PeoplesPay ID
+                            "collectin_status": collection_data["success"],
+                            "collection_code": collection_data["code"],
                         },
                         status=status.HTTP_201_CREATED,
                     )
