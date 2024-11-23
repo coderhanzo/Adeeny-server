@@ -1,8 +1,10 @@
-from curses import raw
-from email.policy import default
-import os
 from rest_framework import serializers
 from .models import Payments, Collections, CollectionsCard
+from rest_framework.exceptions import ValidationError
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
+import os
 
 
 class PaymentsSerializer(serializers.ModelSerializer):
@@ -47,31 +49,37 @@ class CardDetailsSerializer(serializers.Serializer):
 
 
 class CollectionsCardSerializer(serializers.ModelSerializer):
-    card = CardDetailsSerializer(write_only=True)
+    card = CardDetailsSerializer(write_only=True)  # Nested serializer for card details
 
     class Meta:
         model = CollectionsCard
         fields = "__all__"
 
     def create(self, validated_data):
-        # Retrieve the nested 'card' data and separate it from the rest
+        # Retrieve the nested 'card' data
         card_data = validated_data.pop("card", None)
+        if not card_data:
+            raise serializers.ValidationError({"card": "Card details are required."})
 
-        # Create a new card instance with remaining data
-        card_instance = CollectionsCard(**validated_data)
+        # Generate a new salt
+        salt = os.urandom(20)
 
-        # Hash the card data if provided
-        if card_data:
-            card_instance.salt = os.urandom(20)  # Generate a random salt for hashing
-            card_instance.number = card_instance._hash_value(
-                card_data["number"], card_instance.salt
+        # Hash card details
+        def hash_value(value, salt):
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=20,
+                salt=salt,
+                iterations=100000,
+                backend=default_backend(),
             )
-            card_instance.cvc = card_instance._hash_value(
-                card_data["cvc"], card_instance.salt
-            )
-            card_instance.expiry = card_instance._hash_value(
-                card_data["expiry"], card_instance.salt
-            )
+            return kdf.derive(value.encode())  # Convert value to bytes for hashing
 
-        card_instance.save()
-        return card_instance
+        # Add hashed values to validated_data
+        validated_data["number"] = hash_value(card_data["number"], salt)
+        validated_data["cvc"] = hash_value(card_data["cvc"], salt)
+        validated_data["expiry"] = hash_value(card_data["expiry"], salt)
+        validated_data["salt"] = salt
+
+        # Create and return the instance
+        return CollectionsCard.objects.create(**validated_data)

@@ -81,10 +81,13 @@ class CollectionsCard(models.Model):
     expiry = models.CharField(editable=False, max_length=500)
     salt = models.BinaryField(editable=False)  # Salt is binary data
     created_at = models.DateTimeField(auto_now_add=True)
-    card_transaction_id = models.CharField(editable=False, unique=True, max_length=255)
+    card_transaction_id = models.CharField(
+        editable=False, unique=True, max_length=255, default="peoplespay_id"
+    )
 
     def _hash_value(self, value, salt):
-        # PBKDF2HMAC key derivation function
+        if not isinstance(value, str):
+            value = str(value)
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=20,
@@ -92,9 +95,10 @@ class CollectionsCard(models.Model):
             iterations=100000,
             backend=default_backend(),
         )
+
         return kdf.derive(value.encode())  # Convert value to bytes for hashing
 
     def __str__(self):
-        # Display first 10 characters of hashed card_number in hex, if it exists
-        card_number_hex = self.card_number[:10].hex() if self.card_number else "N/A"
+    # Display first 10 characters of hashed card_number in hex
+        card_number_hex = self.number[:10].hex() if self.number else "N/A"
         return f"Card Info (Hashed): {card_number_hex}... with Salt"

@@ -1,4 +1,5 @@
 import os
+import stat
 from h11 import Response
 import requests
 from django.conf import settings
@@ -32,7 +33,7 @@ class PeoplesPayService:
             if response.status_code == 200 and "data" in response_data:
                 return response_data
             else:
-                return None
+                return status.HTTP_400_BAD_REQUEST
         except requests.exceptions.RequestException as e:
             print(f"Error retrieving token: {e}")
             return Response(
