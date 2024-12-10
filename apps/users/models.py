@@ -16,8 +16,6 @@ def upload_to(instance, filename):
 
 
 class User(AbstractUser):
-    is_staff = None
-    is_superuser = None
     username = None
 
     class Roles(models.TextChoices):
