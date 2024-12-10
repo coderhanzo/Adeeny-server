@@ -1,15 +1,8 @@
-import collections
-import stat
 import json
-import trace
-from urllib import request, response
-from django.shortcuts import render
-from django.conf import settings
+from urllib import request
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from apps import transactions
 from .models import Payments, Collections, CollectionsCard
 from .serializers import (
     PaymentsSerializer,
@@ -17,9 +10,7 @@ from .serializers import (
     CollectionsCardSerializer,
     NameEnquirySerializer,
 )
-from django.db import transaction
 from .services import PeoplesPayService
-from django.urls import reverse
 import requests
 import uuid
 

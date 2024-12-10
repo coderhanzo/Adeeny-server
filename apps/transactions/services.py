@@ -1,8 +1,6 @@
 import os
-import stat
-from h11 import Response
+from rest_framework.response import Response
 import requests
-from django.conf import settings
 from rest_framework import status
 
 
