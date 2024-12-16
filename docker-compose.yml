@@ -19,11 +19,10 @@ services:
       - adeeny-network
 
   web:
-    container_name: Adeeny-django-web
+    container_name: Adeeny-backend
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    # entrypoint: ["./docker/build.sh"]
     command: ./wait-for-it.sh mysql-db:3306 -- gunicorn config.wsgi:application --bind 0.0.0.0:8000
     # command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
     # command: python manage.py runserver 0.0.0.0:8000
@@ -39,6 +38,15 @@ services:
       - mysql-db
     networks:
       - adeeny-network
+
+  react-app:
+    container_name: Adeeny-Dashboard
+    build:
+      context: .
+      dockerfile: ./adeeny-dashboard/Dockerfile
+    ports:
+      - "80:80"
+
 networks:
   adeeny-network:
     driver: bridge
