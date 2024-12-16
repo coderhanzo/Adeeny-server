@@ -1,14 +1,18 @@
-# Step 1: Use an official Nginx image
-FROM nginx:alpine
+# Use Node.js LTS version
+FROM node:18 AS build
 
-# Step 2: Remove default Nginx static assets
-RUN rm -rf /usr/share/nginx/html/*
+WORKDIR /app
 
-# Step 3: Copy the build files to the Nginx static directory
-COPY ./adeeny-dashboard/dist /usr/share/nginx/html
+# Copy package files first
+COPY ./adeeny-dashboard/package.json ./adeeny-dashboard/package-lock.json ./
 
-# Step 4: Expose port 80
-EXPOSE 80
+# Clear cache and install dependencies
+RUN npm cache clean --force && npm install
 
-# Step 5: Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Copy the rest of the application code
+COPY ./adeeny-dashboard . 
+
+# Run the build step
+RUN npm run build
+
+CMD ["npm", "start"]
