@@ -18,7 +18,7 @@ services:
     networks:
       - adeeny-network
 
-  web:
+  adeeny-backend:
     container_name: Adeeny-backend
     build:
       context: .
@@ -39,13 +39,15 @@ services:
     networks:
       - adeeny-network
 
-  react-app:
+  dashboard:
     container_name: Adeeny-Dashboard
     build:
       context: .
-      dockerfile: ./adeeny-dashboard/Dockerfile
+      dockerfile: ./dist/Dockerfile
     ports:
       - "80:80"
+    depends_on:
+      - adeeny-backend
 
 networks:
   adeeny-network:

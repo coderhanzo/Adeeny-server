@@ -15,6 +15,57 @@ LOGS_DIR = os.path.join(BASE_DIR, "logs")
 if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR)
 
+
+DRF_API_LOGGER = {
+    "VERSION": 1,
+    "DISABLE_REQUEST_LOGGING": False,
+    "DISABLE_RESPONSE_LOGGING": False,
+    "FORMAT_LOGS_AS_DICT": True,
+    "MASK_HEADERS": [
+        "Authorization",
+        "Cookie",
+        "password",
+        "token",
+        "access",
+        "refresh",
+    ],
+    "STATUS_CODES_TO_LOG": [200, 400, 404, 500],
+    "METHODS_TO_LOG": ["GET", "POST", "DELETE", "PUT"],
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "drf_api_file": {
+            "level": "DEBUG",  # Set to a single logging level
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOGS_DIR, "drf_api.log"),
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOGS_DIR, "error.log"),
+        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "drf_api_logger": {
+            "handlers": ["drf_api_file", "console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["error_file", "console"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+    },
+}
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -267,59 +318,3 @@ APIKEY = env("PEOPLES_PAY_API_KEY")
 
 
 PHONENUMBER_DEFAULT_REGION = "GH"
-
-
-DRF_API_LOGGER = {
-    "VERSION": 1,
-    "DISABLE_REQUEST_LOGGING": False,
-    "DISABLE_RESPONSE_LOGGING": False,
-    "FORMAT_LOGS_AS_DICT": True,
-    "MASK_HEADERS": [
-        "Authorization",
-        "Cookie",
-        "password",
-        "token",
-        "access",
-        "refresh",
-    ],
-    "STATUS_CODES_TO_LOG": [200, 400, 404, 500],
-    "METHODS_TO_LOG": ["GET", "POST", "DELETE", "PUT"],
-}
-
-
-LOGGERS = {
-    "VERSION": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        # handle drf api logs
-        "drf_api_file": {
-            "level": "DEBUG,INFO",
-            "class": "logging.FileHandler",
-            "filename": os.path.join(LOGS_DIR, "drf_api.log"),
-        },
-        # handle general errors
-        "error_file": {
-            "level": "ERROR",
-            "class": "logging.FileHandler",
-            "filename": os.path.join(LOGS_DIR, "error.log"),
-        },
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-        },
-    },
-    "loggers": {
-        # Logger for DRF API Logger
-        "drf_api_logger": {
-            "handlers": ["drf_api_file", "console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        # General error logger
-        "django": {
-            "handlers": ["error_file", "console"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-    },
-}

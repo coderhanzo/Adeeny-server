@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 ARG PYTHON_VERSION=3.12.4
-FROM python:${PYTHON_VERSION}-slim as base
+FROM python:${PYTHON_VERSION}-slim AS base
 
 ENV APP_HOME=/app \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -42,4 +42,3 @@ RUN poetry config virtualenvs.create false && poetry install && rm -rf $POETRY_C
 COPY . .
 
 CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
-# CMD ["/build"]
