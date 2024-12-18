@@ -1,0 +1,20 @@
+# node
+node_modules
+dist
+
+
+# version_control
+.git
+.gitignore
+
+
+# env files
+.env
+.env.example
+
+# vscode 
+.vscode
+.idea
+
+# miscellaneous
+.DS_Store

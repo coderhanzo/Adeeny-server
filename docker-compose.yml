@@ -18,6 +18,7 @@ services:
     networks:
       - adeeny-network
 
+# backend
   adeeny-backend:
     container_name: Adeeny-backend
     build:
@@ -39,15 +40,19 @@ services:
     networks:
       - adeeny-network
 
+# dashboard frontend
   dashboard:
     container_name: Adeeny-Dashboard
     build:
       context: .
-      dockerfile: ./dist/Dockerfile
+      dockerfile: ./adeeny-dashboard/Dockerfile
     ports:
-      - "80:80"
+      - "3000:3000"
     depends_on:
       - adeeny-backend
+      - mysql-db
+    networks:
+      - adeeny-network
 
 networks:
   adeeny-network:

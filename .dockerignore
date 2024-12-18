@@ -24,4 +24,15 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+
+# env files
+.env
+.env.example
+
+# version_control
+.git
+.gitignore
+
+# miscellaneous
+.DS_Store
 README.md
