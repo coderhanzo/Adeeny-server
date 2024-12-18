@@ -1,3 +1,15 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install vite --save-dev
+
+COPY . .
+
+RUN npm run build
+
 
 
 
