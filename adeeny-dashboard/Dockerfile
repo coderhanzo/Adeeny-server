@@ -1,3 +1,7 @@
+
+
+
+
 # Use nginx as the base image for serving the React build
 FROM nginx:alpine
 
